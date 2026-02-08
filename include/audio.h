@@ -5,8 +5,10 @@
 #include <driver/i2s.h>
 #include "config.h"
 
-// Audio buffer
+// Audio buffers (accessible externally for FFT processing)
 extern int32_t rawSamples[SAMPLES * 2];
+extern double vReal[SAMPLES];
+extern double vImag[SAMPLES];
 
 // Initialize the I2S microphone
 void setupI2S();
