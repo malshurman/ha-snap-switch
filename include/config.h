@@ -28,7 +28,7 @@
 // ============================================
 #define SNAP_FREQ_LOW          1500     // Lower bound of snap frequency (Hz) - for display only
 #define SNAP_FREQ_HIGH         6000     // Upper bound of snap frequency (Hz) - for display only
-#define SNAP_ENERGY_THRESHOLD  500000   // Minimum energy in snap band (tune empirically)
+#define SNAP_ENERGY_THRESHOLD  5000     // Minimum energy in snap band (tune empirically)
 #define SNAP_RATIO_THRESHOLD   1.5      // Snap band must be X times stronger than reject band
 #define AMPLITUDE_THRESHOLD    5000000  // Minimum raw amplitude to consider
 #define DECAY_TIME_MS          70       // Time to check for decay confirmation
@@ -42,7 +42,7 @@
 #define MIN_RISE_FACTOR        4.0      // Sharp energy jump from background
 #define MAX_SNAP_DURATION_MS   150      // Reject sounds lasting longer than this
 #define ENERGY_HISTORY_SIZE    4        // Number of previous frames to track
-#define FLUX_THRESHOLD         100000   // Spectral flux for sudden changes (tune empirically)
+#define FLUX_THRESHOLD         2000     // Spectral flux for sudden changes (tune empirically)
 
 // Simplified IIR-based checks
 #define MIN_CREST_FACTOR       3.0      // Peak/RMS ratio - snaps are very peaky

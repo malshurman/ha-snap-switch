@@ -3,14 +3,13 @@
 
 // Biquad filter state (Direct Form II)
 struct BiquadState {
-    double x1, x2;  // Input history
-    double y1, y2;  // Output history
+    double y1, y2;  // Delay line for Direct Form II
 };
 
 // Three filter states
-static BiquadState rejectState = {0, 0, 0, 0};
-static BiquadState snapState = {0, 0, 0, 0};
-static BiquadState brightState = {0, 0, 0, 0};
+static BiquadState rejectState = {0, 0};
+static BiquadState snapState = {0, 0};
+static BiquadState brightState = {0, 0};
 
 // Energy envelopes (exponential moving average)
 static double rejectEnergy = 0.0;
@@ -42,9 +41,9 @@ static double updateEnvelope(double currentEnergy, double newSample) {
 }
 
 void initFilterBank() {
-    rejectState = {0, 0, 0, 0};
-    snapState = {0, 0, 0, 0};
-    brightState = {0, 0, 0, 0};
+    rejectState = {0, 0};
+    snapState = {0, 0};
+    brightState = {0, 0};
     rejectEnergy = 0.0;
     snapEnergy = 0.0;
     brightEnergy = 0.0;

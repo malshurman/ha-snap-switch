@@ -21,11 +21,11 @@
 #define BRIGHT_B0  0.097631072938
 #define BRIGHT_B1  -0.195262145876
 #define BRIGHT_B2  0.097631072938
-#define BRIGHT_A1  0.942809041582
-#define BRIGHT_A2  0.333333333333
+#define BRIGHT_A1  -0.942809041582
+#define BRIGHT_A2  -0.333333333333
 
 // Energy envelope parameters
-#define EMA_ATTACK_ALPHA   0.3   // Fast attack (5ms)
+#define EMA_ATTACK_ALPHA   0.6   // Faster attack for transients (~2ms)
 #define EMA_RELEASE_ALPHA  0.1   // Slower release (20ms)
 
 void initFilterBank();
