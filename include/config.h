@@ -26,6 +26,8 @@
 // - Low energy below 500Hz (reject filter)
 // - High crest factor (peaky waveform)
 // ============================================
+#define SNAP_FREQ_LOW          1500     // Lower bound of snap frequency (Hz) - for display only
+#define SNAP_FREQ_HIGH         6000     // Upper bound of snap frequency (Hz) - for display only
 #define SNAP_ENERGY_THRESHOLD  500000   // Minimum energy in snap band (tune empirically)
 #define SNAP_RATIO_THRESHOLD   1.5      // Snap band must be X times stronger than reject band
 #define AMPLITUDE_THRESHOLD    5000000  // Minimum raw amplitude to consider
