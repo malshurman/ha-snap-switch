@@ -16,31 +16,36 @@
 #define SAMPLING_FREQ 16000
 
 // ============================================
-// SNAP DETECTION PARAMETERS (IIR Filter-Based)
-// Research-based: snaps concentrate at 1500-3500 Hz, peak 2kHz
-// Duration ~7ms, ultrafast attack, single impulse
+// SNAP DETECTION PARAMETERS
+// Finger snaps are extremely impulsive:
+// - Main transient is only ~10-50ms
+// - Strong energy concentrated in 2000-6000 Hz
+// - Near-instant rise from silence to peak
+// - Very fast decay back to silence
+// - High spectral centroid (brightness)
+// - Low energy below 500Hz
+// - High crest factor (peaky waveform)
 // ============================================
-#define SNAP_FREQ_LOW          1500     // Lower bound (Hz) - for display
-#define SNAP_FREQ_HIGH         3500     // Upper bound (Hz) - for display
-#define SNAP_ENERGY_THRESHOLD  50000000  // Min energy in snap band (50M)
-#define SNAP_RATIO_THRESHOLD   2.5      // Snap/reject ratio (snaps must be clean/high-freq)
-#define AMPLITUDE_THRESHOLD    5000000  // Min raw amplitude
-#define DECAY_TIME_MS          70       // Wait before checking decay
-#define DECAY_FACTOR           0.3      // Must drop to <30% to confirm snap
+#define SNAP_FREQ_LOW      1500   // Lower bound of snap frequency (Hz)
+#define SNAP_FREQ_HIGH     6000   // Upper bound of snap frequency (Hz) - snaps extend to ~6kHz
+#define SNAP_ENERGY_THRESHOLD  1500000  // Minimum energy in snap frequency band (reduced for sensitivity)
+#define SNAP_RATIO_THRESHOLD   1.3      // Snap band must be X times stronger than low freq (reduced)
+#define AMPLITUDE_THRESHOLD    4000000  // Minimum raw amplitude to consider (reduced)
+#define DECAY_TIME_MS          50       // Snap must decay within this time (tighter for sharp snaps)
+#define DECAY_FACTOR           0.3      // Energy must drop to this fraction to confirm snap (stricter)
 
-// Anti-sustain logic (rejects toilet flushes, running water)
-#define SUSTAIN_CHECK_TIME_MS  50       // Check for sustained energy
-#define SUSTAIN_THRESHOLD      0.7      // Reject if >70% of peak
+// Impulsiveness / temporal checks (key improvement for sharp transients)
+#define MIN_RISE_FACTOR        5.0      // Current snap energy must be Nx the previous frame (reduced)
+#define MAX_SNAP_DURATION_MS   150      // Reject sounds lasting longer than this
+#define MIN_SPECTRAL_CONCENTRATION 0.30 // Min fraction of total energy in snap band (reduced)
+#define ENERGY_HISTORY_SIZE    4        // Number of previous frames to track
 
-// Transient detection (critical for snap vs sustained sounds)
-#define MIN_RISE_FACTOR        15.0     // Sharp energy jump from background
-#define MAX_SNAP_DURATION_MS   150      // Reject sounds lasting longer
-#define ENERGY_HISTORY_SIZE    4        // Previous frames to track
-#define FLUX_THRESHOLD         10000000 // Spectral flux for sudden changes (10M)
-
-// Optional checks (diagnostic)
-#define MIN_CREST_FACTOR       3.0      // Peak/RMS ratio
-#define TRANSIENT_THRESHOLD    500      // Min transient band energy (3kHz+)
+// Additional snap signature checks
+#define MIN_SPECTRAL_CENTROID  2000     // Minimum spectral centroid (Hz) - snaps are "bright"
+#define MAX_LOW_FREQ_ENERGY    3000000  // Reject if too much bass (voice, music)
+#define MIN_CREST_FACTOR       3.0      // Peak/RMS ratio - snaps are very peaky
+#define MIN_HIGH_FREQ_RATIO    0.10     // Minimum ratio of 6kHz+ energy to total (lowered since band widened)
+#define MAX_MID_FREQ_RATIO     0.35     // Maximum ratio of 500-1500Hz (voice range)
 
 // ============================================
 // DOUBLE SNAP DETECTION
