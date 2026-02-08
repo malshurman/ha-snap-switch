@@ -175,22 +175,20 @@ SnapResult processSnapDetection(int32_t maxAmplitude, double rms) {
     snapCount = 0;
   }
   
-  // === PRIMARY SNAP DETECTION (Three Essential Checks) ===
+  // === PRIMARY SNAP DETECTION (Essential Checks) ===
   bool hasEnoughSnapEnergy = snapEnergy > SNAP_ENERGY_THRESHOLD;
   bool hasSuddenChange = spectralFlux > FLUX_THRESHOLD;
   bool hasSharpRise = riseFactor > MIN_RISE_FACTOR;
+  bool hasGoodCrestFactor = crestFactor > MIN_CREST_FACTOR;
+  bool hasGoodRatio = snapRatio > SNAP_RATIO_THRESHOLD;
 
-  bool isPrimarySnap = hasEnoughSnapEnergy && hasSuddenChange && hasSharpRise;
+  bool isPrimarySnap = hasEnoughSnapEnergy && hasSuddenChange && hasSharpRise &&
+                       hasGoodCrestFactor && hasGoodRatio;
 
-  // === OPTIONAL DIAGNOSTICS (log but don't block) ===
-  if (hasEnoughSnapEnergy || hasSuddenChange) {  // Only log when close to trigger
-    bool hasGoodCrestFactor = crestFactor > MIN_CREST_FACTOR;
-    bool hasGoodRatio = snapRatio > SNAP_RATIO_THRESHOLD;
-    bool hasTransientContent = transientEnergy > TRANSIENT_THRESHOLD;
-
+  // === DIAGNOSTICS ===
+  if (hasEnoughSnapEnergy || hasSuddenChange) {
     if (!hasGoodCrestFactor) Serial.printf("[WARN] Low crest: %.1f < %.1f\n", crestFactor, MIN_CREST_FACTOR);
     if (!hasGoodRatio) Serial.printf("[WARN] Low ratio: %.2f < %.2f\n", snapRatio, SNAP_RATIO_THRESHOLD);
-    if (!hasTransientContent) Serial.printf("[WARN] Low transient: %.1f < %.1f\n", transientEnergy, TRANSIENT_THRESHOLD);
   }
 
   if (isPrimarySnap) {
