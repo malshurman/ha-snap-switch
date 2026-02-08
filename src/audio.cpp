@@ -1,12 +1,13 @@
 #include "audio.h"
+#include "iir_filters.h"
 #include <math.h>
 
 // Audio buffers
 int32_t rawSamples[SAMPLES * 2];
-double vReal[SAMPLES];
-double vImag[SAMPLES];
 
 void setupI2S() {
+  initFilterBank();
+
   i2s_driver_uninstall(I2S_PORT);
   delay(100);
 
@@ -45,18 +46,19 @@ int readAudioSamples(int32_t* maxAmplitude, double* rms) {
   
   int samplesRead = bytesRead / sizeof(int32_t);
   
-  // Extract left channel and calculate amplitude + RMS
+  // Extract left channel and calculate amplitude + RMS, process filters
   *maxAmplitude = 0;
   double sumSquares = 0;
-  
+
   for (int i = 0; i < SAMPLES && i * 2 < samplesRead; i++) {
     int32_t sample = rawSamples[i * 2];
     double normalizedSample = (double)(sample >> 8);
-    vReal[i] = normalizedSample;
-    vImag[i] = 0.0;
-    
+
+    // Process through IIR filter bank
+    processFilterBank(normalizedSample);
+
     sumSquares += normalizedSample * normalizedSample;
-    
+
     int32_t absSample = sample < 0 ? -sample : sample;
     if (absSample > *maxAmplitude) *maxAmplitude = absSample;
   }
