@@ -22,7 +22,7 @@
 // ============================================
 #define SNAP_FREQ_LOW          1500     // Lower bound (Hz) - for display
 #define SNAP_FREQ_HIGH         3500     // Upper bound (Hz) - for display
-#define SNAP_ENERGY_THRESHOLD  50000    // Min energy in snap band (start conservative)
+#define SNAP_ENERGY_THRESHOLD  500000   // Min energy in snap band (start conservative)
 #define SNAP_RATIO_THRESHOLD   1.5      // Snap/reject ratio (diagnostic only)
 #define AMPLITUDE_THRESHOLD    5000000  // Min raw amplitude
 #define DECAY_TIME_MS          70       // Wait before checking decay
@@ -33,10 +33,10 @@
 #define SUSTAIN_THRESHOLD      0.7      // Reject if >70% of peak
 
 // Transient detection (critical for snap vs sustained sounds)
-#define MIN_RISE_FACTOR        6.0      // Sharp energy jump from background
+#define MIN_RISE_FACTOR        8.0      // Sharp energy jump from background
 #define MAX_SNAP_DURATION_MS   150      // Reject sounds lasting longer
 #define ENERGY_HISTORY_SIZE    4        // Previous frames to track
-#define FLUX_THRESHOLD         20000    // Spectral flux for sudden changes
+#define FLUX_THRESHOLD         100000   // Spectral flux for sudden changes
 
 // Optional checks (diagnostic)
 #define MIN_CREST_FACTOR       3.0      // Peak/RMS ratio
