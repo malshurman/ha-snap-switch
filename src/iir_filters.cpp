@@ -6,15 +6,16 @@ struct BiquadState {
     double y1, y2;  // Delay line for Direct Form II
 };
 
-// Three filter states
+// Four filter states (reject + snap_hp + snap_lp + transient)
 static BiquadState rejectState = {0, 0};
-static BiquadState snapState = {0, 0};
-static BiquadState brightState = {0, 0};
+static BiquadState snapHpState = {0, 0};
+static BiquadState snapLpState = {0, 0};
+static BiquadState transientState = {0, 0};
 
 // Energy envelopes (exponential moving average)
 static double rejectEnergy = 0.0;
 static double snapEnergy = 0.0;
-static double brightEnergy = 0.0;
+static double transientEnergy = 0.0;
 
 // Biquad filter (Direct Form II)
 static double processBiquad(double input, BiquadState* state,
@@ -42,31 +43,39 @@ static double updateEnvelope(double currentEnergy, double newSample) {
 
 void initFilterBank() {
     rejectState = {0, 0};
-    snapState = {0, 0};
-    brightState = {0, 0};
+    snapHpState = {0, 0};
+    snapLpState = {0, 0};
+    transientState = {0, 0};
     rejectEnergy = 0.0;
     snapEnergy = 0.0;
-    brightEnergy = 0.0;
+    transientEnergy = 0.0;
 }
 
 void processFilterBank(double sample) {
-    // Process through all three filters
+    // Stage 1: Reject low frequencies
     double rejectOut = processBiquad(sample, &rejectState,
                                      REJECT_B0, REJECT_B1, REJECT_B2,
                                      REJECT_A1, REJECT_A2);
 
-    double snapOut = processBiquad(sample, &snapState,
-                                   SNAP_B0, SNAP_B1, SNAP_B2,
-                                   SNAP_A1, SNAP_A2);
+    // Stage 2a: SNAP band high-pass @ 1500 Hz
+    double snapHpOut = processBiquad(sample, &snapHpState,
+                                     SNAP_HP_B0, SNAP_HP_B1, SNAP_HP_B2,
+                                     SNAP_HP_A1, SNAP_HP_A2);
 
-    double brightOut = processBiquad(sample, &brightState,
-                                     BRIGHT_B0, BRIGHT_B1, BRIGHT_B2,
-                                     BRIGHT_A1, BRIGHT_A2);
+    // Stage 2b: SNAP band low-pass @ 3500 Hz (cascaded)
+    double snapOut = processBiquad(snapHpOut, &snapLpState,
+                                   SNAP_LP_B0, SNAP_LP_B1, SNAP_LP_B2,
+                                   SNAP_LP_A1, SNAP_LP_A2);
+
+    // Stage 3: TRANSIENT band @ 3000 Hz
+    double transientOut = processBiquad(sample, &transientState,
+                                        TRANSIENT_B0, TRANSIENT_B1, TRANSIENT_B2,
+                                        TRANSIENT_A1, TRANSIENT_A2);
 
     // Update energy envelopes
     rejectEnergy = updateEnvelope(rejectEnergy, rejectOut);
     snapEnergy = updateEnvelope(snapEnergy, snapOut);
-    brightEnergy = updateEnvelope(brightEnergy, brightOut);
+    transientEnergy = updateEnvelope(transientEnergy, transientOut);
 }
 
 double getRejectEnergy() {
@@ -77,8 +86,8 @@ double getSnapEnergy() {
     return snapEnergy;
 }
 
-double getBrightEnergy() {
-    return brightEnergy;
+double getTransientEnergy() {
+    return transientEnergy;
 }
 
 void resetFilterBank() {

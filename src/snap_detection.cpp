@@ -15,7 +15,7 @@ static unsigned long snapStartTime = 0;
 static double energyHistory[ENERGY_HISTORY_SIZE] = {0};
 static int energyHistoryIdx = 0;
 static double prevSnapEnergy = 0;
-static double prevBrightEnergy = 0;
+static double prevTransientEnergy = 0;
 
 // Callback
 static DoubleSnapCallback doubleSnapCallback = nullptr;
@@ -27,7 +27,7 @@ void initSnapDetector() {
   waitingForDecay = false;
   energyHistoryIdx = 0;
   prevSnapEnergy = 0;
-  prevBrightEnergy = 0;
+  prevTransientEnergy = 0;
   for (int i = 0; i < ENERGY_HISTORY_SIZE; i++) {
     energyHistory[i] = 0;
   }
@@ -45,15 +45,13 @@ SnapResult processSnapDetection(int32_t maxAmplitude, double rms) {
   // Get IIR filter energies
   double rejectEnergy = getRejectEnergy();
   double snapEnergy = getSnapEnergy();
-  double brightEnergy = getBrightEnergy();
+  double transientEnergy = getTransientEnergy();
 
   // Derived metrics
-  double totalEnergy = snapEnergy + brightEnergy;
   double snapRatio = (rejectEnergy > 1e-6) ? (snapEnergy / rejectEnergy) : 999.0;
-  double brightRatio = (totalEnergy > 1e-6) ? (brightEnergy / totalEnergy) : 0.0;
 
   // Spectral flux: sudden energy change (key for transient detection)
-  double spectralFlux = fabs(snapEnergy - prevSnapEnergy) + fabs(brightEnergy - prevBrightEnergy);
+  double spectralFlux = fabs(snapEnergy - prevSnapEnergy) + fabs(transientEnergy - prevTransientEnergy);
 
   // Rise time detection - compare to recent history
   double avgPrevEnergy = 0;
@@ -68,11 +66,29 @@ SnapResult processSnapDetection(int32_t maxAmplitude, double rms) {
   // Update energy history ring buffer (BEFORE any early returns)
   energyHistory[energyHistoryIdx] = snapEnergy;
   prevSnapEnergy = snapEnergy;
-  prevBrightEnergy = brightEnergy;
+  prevTransientEnergy = transientEnergy;
   energyHistoryIdx = (energyHistoryIdx + 1) % ENERGY_HISTORY_SIZE;
   
   unsigned long now = millis();
-  
+
+  // DEBUG: Print all metrics every 100ms
+  static unsigned long lastDebugPrint = 0;
+  if (now - lastDebugPrint > 100) {
+    Serial.printf("E[snap=%.0f rej=%.0f trans=%.0f] R[s/r=%.2f] M[flux=%.0f rise=%.1fx crest=%.1f] A[max=%ld rms=%.0f]",
+        snapEnergy, rejectEnergy, transientEnergy,
+        snapRatio,
+        spectralFlux, riseFactor, crestFactor,
+        maxAmplitude, rms);
+
+    // Show which checks would pass
+    if (snapEnergy > SNAP_ENERGY_THRESHOLD) Serial.print(" \xE2\x9C\x93""ENERGY");
+    if (spectralFlux > FLUX_THRESHOLD) Serial.print(" \xE2\x9C\x93""FLUX");
+    if (riseFactor > MIN_RISE_FACTOR) Serial.print(" \xE2\x9C\x93""RISE");
+
+    Serial.println();
+    lastDebugPrint = now;
+  }
+
   // Check cooldown
   if (now - lastActivationTime < ACTIVATION_COOLDOWN_MS) {
     return SNAP_NONE;
@@ -159,23 +175,29 @@ SnapResult processSnapDetection(int32_t maxAmplitude, double rms) {
     snapCount = 0;
   }
   
-  // === Snap signature checks (simplified for IIR) ===
-  bool hasEnoughAmplitude = maxAmplitude > AMPLITUDE_THRESHOLD;
+  // === PRIMARY SNAP DETECTION (Three Essential Checks) ===
   bool hasEnoughSnapEnergy = snapEnergy > SNAP_ENERGY_THRESHOLD;
-  bool hasGoodRatio = snapRatio > SNAP_RATIO_THRESHOLD;
-  bool hasGoodCrestFactor = crestFactor > MIN_CREST_FACTOR;
   bool hasSuddenChange = spectralFlux > FLUX_THRESHOLD;
   bool hasSharpRise = riseFactor > MIN_RISE_FACTOR;
-  bool hasBrightness = brightRatio > MIN_HIGH_FREQ_RATIO;
 
-  bool isLikelySnap = hasEnoughAmplitude && hasEnoughSnapEnergy && hasGoodRatio &&
-                      hasGoodCrestFactor && hasSuddenChange && hasSharpRise && hasBrightness;
-  
-  if (isLikelySnap) {
+  bool isPrimarySnap = hasEnoughSnapEnergy && hasSuddenChange && hasSharpRise;
+
+  // === OPTIONAL DIAGNOSTICS (log but don't block) ===
+  if (hasEnoughSnapEnergy || hasSuddenChange) {  // Only log when close to trigger
+    bool hasGoodCrestFactor = crestFactor > MIN_CREST_FACTOR;
+    bool hasGoodRatio = snapRatio > SNAP_RATIO_THRESHOLD;
+    bool hasTransientContent = transientEnergy > TRANSIENT_THRESHOLD;
+
+    if (!hasGoodCrestFactor) Serial.printf("[WARN] Low crest: %.1f < %.1f\n", crestFactor, MIN_CREST_FACTOR);
+    if (!hasGoodRatio) Serial.printf("[WARN] Low ratio: %.2f < %.2f\n", snapRatio, SNAP_RATIO_THRESHOLD);
+    if (!hasTransientContent) Serial.printf("[WARN] Low transient: %.1f < %.1f\n", transientEnergy, TRANSIENT_THRESHOLD);
+  }
+
+  if (isPrimarySnap) {
+    Serial.println("[TRIGGER] Primary snap signature detected - entering decay confirmation");
     waitingForDecay = true;
     peakEnergyDuringSnap = snapEnergy;
     snapStartTime = now;
-
     return SNAP_WAITING_DECAY;
   }
   
