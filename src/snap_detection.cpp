@@ -110,10 +110,14 @@ SnapResult processSnapDetection(int32_t maxAmplitude, double rms) {
   // Check for decay after potential snap
   if (waitingForDecay) {
     unsigned long elapsed = now - snapStartTime;
-    
-    // Max duration check - reject sustained sounds early
+
+    // Max duration check - reject sustained sounds early OR timeout if stuck
     if (elapsed > MAX_SNAP_DURATION_MS) {
       waitingForDecay = false;
+      // Clear energy history to prevent contamination
+      for (int i = 0; i < ENERGY_HISTORY_SIZE; i++) {
+        energyHistory[i] = 0;
+      }
       return SNAP_NONE;
     }
     
@@ -124,7 +128,12 @@ SnapResult processSnapDetection(int32_t maxAmplitude, double rms) {
       if (decayRatio < DECAY_FACTOR) {
         // Good decay - confirms impulsive sound (snap-like)
         snapCount++;
-        
+
+        // Clear energy history to prevent contamination for next snap
+        for (int i = 0; i < ENERGY_HISTORY_SIZE; i++) {
+          energyHistory[i] = 0;
+        }
+
         if (snapCount >= 2) {
           unsigned long gap = now - lastSnapTime;
           if (gap >= DOUBLE_SNAP_MIN_GAP_MS && gap <= DOUBLE_SNAP_MAX_GAP_MS) {
