@@ -28,22 +28,22 @@
 // ============================================
 #define SNAP_FREQ_LOW      1500   // Lower bound of snap frequency (Hz)
 #define SNAP_FREQ_HIGH     6000   // Upper bound of snap frequency (Hz) - snaps extend to ~6kHz
-#define SNAP_ENERGY_THRESHOLD  1500000  // Minimum energy in snap frequency band (reduced for sensitivity)
-#define SNAP_RATIO_THRESHOLD   1.3      // Snap band must be X times stronger than low freq (reduced)
-#define AMPLITUDE_THRESHOLD    4000000  // Minimum raw amplitude to consider (reduced)
+#define SNAP_ENERGY_THRESHOLD  1000000  // Minimum energy in snap frequency band
+#define SNAP_RATIO_THRESHOLD   1.2      // Snap band must be X times stronger than low freq
+#define AMPLITUDE_THRESHOLD    3000000  // Minimum raw amplitude to consider
 #define DECAY_TIME_MS          50       // Snap must decay within this time (tighter for sharp snaps)
 #define DECAY_FACTOR           0.3      // Energy must drop to this fraction to confirm snap (stricter)
 
 // Impulsiveness / temporal checks (key improvement for sharp transients)
-#define MIN_RISE_FACTOR        5.0      // Current snap energy must be Nx the previous frame (reduced)
+#define MIN_RISE_FACTOR        4.0      // Current snap energy must be Nx the previous frame
 #define MAX_SNAP_DURATION_MS   150      // Reject sounds lasting longer than this
-#define MIN_SPECTRAL_CONCENTRATION 0.30 // Min fraction of total energy in snap band (reduced)
+#define MIN_SPECTRAL_CONCENTRATION 0.25 // Min fraction of total energy in snap band
 #define ENERGY_HISTORY_SIZE    4        // Number of previous frames to track
 
 // Additional snap signature checks
 #define MIN_SPECTRAL_CENTROID  2000     // Minimum spectral centroid (Hz) - snaps are "bright"
 #define MAX_LOW_FREQ_ENERGY    3000000  // Reject if too much bass (voice, music)
-#define MIN_CREST_FACTOR       3.0      // Peak/RMS ratio - snaps are very peaky
+#define MIN_CREST_FACTOR       2.5      // Peak/RMS ratio - snaps are very peaky
 #define MIN_HIGH_FREQ_RATIO    0.10     // Minimum ratio of 6kHz+ energy to total (lowered since band widened)
 #define MAX_MID_FREQ_RATIO     0.35     // Maximum ratio of 500-1500Hz (voice range)
 
